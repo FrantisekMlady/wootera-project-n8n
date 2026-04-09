@@ -1,0 +1,1977 @@
+{
+  "updatedAt": "2026-03-30T03:53:08.961Z",
+  "createdAt": "2025-11-23T01:05:53.162Z",
+  "id": "qYNiGKFstQeHGaC1",
+  "name": "Final workflow",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT MAX(Id) as Id\nFROM PastEmails\nWHERE Email = '{{ $json.headers.from.match(/<([^>]+)>/)?.[1]|| $json.headers.from }}' AND isDeleted = 0"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        -1024,
+        0
+      ],
+      "id": "984f4d3e-8215-40ed-8f04-515e5cd01cb3",
+      "name": "Microsoft SQL",
+      "credentials": {
+        "microsoftSql": {
+          "id": "vcM0aaMy00q0wKN2",
+          "name": "Microsoft SQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4fd826af-e223-4783-b3f5-b203c8637e67",
+              "leftValue": "={{ $('Microsoft SQL').first().json.Id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        272,
+        -16
+      ],
+      "id": "3d055acc-b652-4d74-af9b-6976cad8c0ed",
+      "name": "PastEmailsExist?"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "cykK4UqJTRfNhx44",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/cykK4UqJTRfNhx44",
+          "cachedResultName": "NoPastEmail Flow"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        2144,
+        96
+      ],
+      "id": "d00fd66e-cca8-4d86-9a7c-0aeb6c1768eb",
+      "name": "Execute NoPastEmail"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "afef9bef-1158-4638-b3f0-1a3f5f8113ad",
+              "name": "contents",
+              "value": "={{ $('Gmail Trigger').item.json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "a0f0ef94-1d8c-48db-91fa-99b50fb37959",
+              "name": "from",
+              "value": "={{ $node[\"Gmail Trigger\"].json.headers.from.match(/<([^>]+)>/)?.[1] || $node[\"Gmail Trigger\"].json.headers.from }}",
+              "type": "string"
+            },
+            {
+              "id": "6a8a5bd0-b731-4c33-a252-dd1b852c3467",
+              "name": "threadId",
+              "value": "={{$node[\"Gmail Trigger\"].json.threadId}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1936,
+        96
+      ],
+      "id": "85a2fd2b-029f-4c5e-bc79-5ab48923d09e",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1232,
+        0
+      ],
+      "id": "bf3a6b99-8aa4-4c0e-980b-552365a76288",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ze0NbDQepzpjNa4d",
+          "name": "testadminwootera"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a55fb2ec-f189-48be-bba8-3992e1f64d5e",
+              "name": "contents",
+              "value": "={{$node[\"ReformatSQLOutput1\"].json.textBody}}",
+              "type": "string"
+            },
+            {
+              "id": "3b1c3ac4-969d-4006-a2e8-d890c7c5fdcd",
+              "name": "=from",
+              "value": "={{ $node[\"Gmail Trigger\"].json.headers.from.match(/<([^>]+)>/)?.[1] || $node[\"Gmail Trigger\"].json.headers.from }}",
+              "type": "string"
+            },
+            {
+              "id": "d8000dce-17f1-4fd5-a6f7-dcef4eb8d458",
+              "name": "=threadId",
+              "value": "={{$node[\"GetPreviousThreadId\"].json.threadId}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2272,
+        -144
+      ],
+      "id": "29f13028-d658-4039-9d90-e53484746392",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "rdlpvpFbJbwbQUzC",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/rdlpvpFbJbwbQUzC",
+          "cachedResultName": "PastEmail Flow"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        2512,
+        -144
+      ],
+      "id": "c2264edd-4af0-481e-9d9f-853a4b0e6d52",
+      "name": "Execute PastEmail"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO PastEmails (Email, Contents, threadId) \nVALUES \n  (\n    '{{ $node[\"Gmail Trigger\"].json.headers.from.match(/<([^>]+)>/)?.[1] || $node[\"Gmail Trigger\"].json.headers.from }}', \n    '{{$node[\"Gmail Trigger\"].json.text}}',\n    '{{$node[\"Gmail Trigger\"].json.threadId}}'\n    \n  );"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        1664,
+        112
+      ],
+      "id": "7ab6ac7d-7d5d-4f4a-912b-a6ea86f2e8fc",
+      "name": "addToPastEmails",
+      "credentials": {
+        "microsoftSql": {
+          "id": "vcM0aaMy00q0wKN2",
+          "name": "Microsoft SQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all(); // gets all rows from previous node\n\nlet message = \"\";\nlet counter = 0;\nfor (const row of rows) {\n  const contents = row.json.Contents;\n  if (counter%2 == 1){\n    message += `user:\\n ${contents}\\n`;\n  }\n  else{\n     message += `admin response:\\n ${contents}\\n`;\n  }\n \n  counter += 1;\n}\n\nreturn [\n  {\n    json: {\n      textBody: message,\n      replyCount: counter\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        -144
+      ],
+      "id": "c8692c0f-4a04-4976-8506-cd01bd0ceb69",
+      "name": "ReformatSQLOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT Contents FROM PastEmails WHERE Email = '{{ $node[\"Gmail Trigger\"].json.headers.from.match(/<([^>]+)>/)?.[1] || $node[\"Gmail Trigger\"].json.headers.from }}' AND isDeleted = 0\n"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        496,
+        -144
+      ],
+      "id": "4c8aee0d-8467-434e-9c20-6026c87023a9",
+      "name": "combine emails",
+      "credentials": {
+        "microsoftSql": {
+          "id": "vcM0aaMy00q0wKN2",
+          "name": "Microsoft SQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-5",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1232,
+        -128
+      ],
+      "id": "764eaa89-c334-4d5d-b5e5-11f37c950298",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "qlW2I6aqmKwXZCyn",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c5231ad5-00f5-489d-89d9-bceeaac8446e",
+              "leftValue": "={{ $json.text }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1344,
+        -144
+      ],
+      "id": "ece4fcce-ef5c-4eba-b56d-f8e656ee4ea3",
+      "name": "isRespecification?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO PastEmails (Email, Contents, threadId)\nSELECT\n  '{{ $node[\"Gmail Trigger\"].json.headers.from.match(/<([^>]+)>/)?.[1] || $node[\"Gmail Trigger\"].json.headers.from }}',\n  '{{ $node[\"Gmail Trigger\"].json.text }}',\n  pe.threadId\nFROM (\n  SELECT TOP 1 threadId\n  FROM PastEmails\n  WHERE Email = '{{ $node[\"Gmail Trigger\"].json.headers.from.match(/<([^>]+)>/)?.[1] || $node[\"Gmail Trigger\"].json.headers.from }}'\n  AND isDeleted = 0\n  ORDER BY Inserted_at DESC\n) pe;"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        1840,
+        -144
+      ],
+      "id": "ad920a2d-d911-43e5-a958-79da1cc83545",
+      "name": "addToPastEmails1",
+      "credentials": {
+        "microsoftSql": {
+          "id": "vcM0aaMy00q0wKN2",
+          "name": "Microsoft SQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c5231ad5-00f5-489d-89d9-bceeaac8446e",
+              "leftValue": "={{ $json.replyCount }}",
+              "rightValue": 6,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        832,
+        -144
+      ],
+      "id": "373f946b-70ee-4fd8-8580-8e616ece1545",
+      "name": "exceedsReplyLimit?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE PastEmails \nSET isDeleted = 1 \nWHERE Email = '{{ $node[\"Gmail Trigger\"].json.headers.from.match(/<([^>]+)>/)?.[1] || $node[\"Gmail Trigger\"].json.headers.from }}' AND isDeleted = 0\n"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        976,
+        -272
+      ],
+      "id": "2cc8eae9-79ed-4746-88dd-41e7d7843e74",
+      "name": "deleteMail1",
+      "credentials": {
+        "microsoftSql": {
+          "id": "vcM0aaMy00q0wKN2",
+          "name": "Microsoft SQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "u7545871846@gmail.com",
+        "toEmail": "={{ $node[\"Gmail Trigger\"].json.headers.from.match(/<([^>]+)>/)?.[1] || $node[\"Gmail Trigger\"].json.headers.from }}",
+        "emailFormat": "text",
+        "text": "Dobrý den,\n\nbohužel už Vám více pomoci nemůžem. Prosíme obrat'te se na číslo uvedené níže.\n\nfirma",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1120,
+        -320
+      ],
+      "id": "604752ce-03f7-488b-bdc2-25ba6a7d76d0",
+      "name": "exceededLimitMail",
+      "webhookId": "294fae90-79dd-426f-a80a-d289016391cd",
+      "credentials": {
+        "smtp": {
+          "id": "HKK5kPvVIepunnFX",
+          "name": "testadminwootera SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Hello, determine whether following email written in Czech is related to a reservation date. If not, answer with 'no'. If yes, answer with 'yes'. Answer only once. Here is the email: {{ $('Gmail Trigger').item.json.text }}",
+        "messages": {
+          "messageValues": [
+            {
+              "type": "HumanMessagePromptTemplate",
+              "message": "="
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -816,
+        0
+      ],
+      "id": "ef8c99c1-a973-4d3b-9d4a-e3e60b70dad6",
+      "name": "Basic LLM Chain",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4fd826af-e223-4783-b3f5-b203c8637e67",
+              "leftValue": "={{ $json.text }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -432,
+        0
+      ],
+      "id": "626d6e86-b0e8-4d85-9f9a-d4bd84224fd2",
+      "name": "IsEmailRelevant?"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-5",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -576,
+        16
+      ],
+      "id": "00ad1f6a-baa3-45de-99b5-2d2884420326",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "qlW2I6aqmKwXZCyn",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT Id FROM users WHERE Email = '{{ $node[\"Gmail Trigger\"].json.headers.from.match(/<([^>]+)>/)?.[1] || $node[\"Gmail Trigger\"].json.headers.from }}'\n"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        -176,
+        -48
+      ],
+      "id": "41733039-a8a7-492a-9931-2ada501e8c3b",
+      "name": "Microsoft SQL3",
+      "credentials": {
+        "microsoftSql": {
+          "id": "vcM0aaMy00q0wKN2",
+          "name": "Microsoft SQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4fd826af-e223-4783-b3f5-b203c8637e67",
+              "leftValue": "={{ $('Microsoft SQL3').first().json.Id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        16,
+        -48
+      ],
+      "id": "7827fefe-f92a-41d1-8039-f14909ddd127",
+      "name": "EmailExists?"
+    },
+    {
+      "parameters": {
+        "fromEmail": "u7545871846@gmail.com",
+        "toEmail": "={{ $node[\"Gmail Trigger\"].json.headers.from.match(/<([^>]+)>/)?.[1] || $node[\"Gmail Trigger\"].json.headers.from }}",
+        "subject": "Email not registered",
+        "emailFormat": "text",
+        "text": "=Dobrý den, \nBohužel v našem systému nejste zapsáni. Prosím registrujte se níže.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        192
+      ],
+      "id": "594f756f-2bcb-49dd-a389-c38ce7aa1492",
+      "name": "Send email to register",
+      "webhookId": "5674e08c-d739-4dbd-8c9d-343c6909eefc",
+      "credentials": {
+        "smtp": {
+          "id": "HKK5kPvVIepunnFX",
+          "name": "testadminwootera SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following email exchange in Czech/Slovak to determine whether in the most recent user email, the user is responding to the rezervations sent by the admin or if the user is respecifying information about the rezervation the user would like to cancel in the user emails before. If its the respecifying case then output 'yes'. If no, output 'no'. Here is the email correspondence: {{ $('ReformatSQLOutput').item.json.textBody }}\n\n\n",
+        "messages": {
+          "messageValues": [
+            {
+              "type": "HumanMessagePromptTemplate",
+              "message": "="
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        992,
+        -144
+      ],
+      "id": "c8975ff3-9a97-4903-bb7f-be195fd05ad5",
+      "name": "respecifying?",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE PastEmails \nSET isDeleted = 1 \nWHERE Email = '{{ $node[\"Gmail Trigger\"].json.headers.from.match(/<([^>]+)>/)?.[1] || $node[\"Gmail Trigger\"].json.headers.from }}' AND isDeleted = 0\n"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        1504,
+        -32
+      ],
+      "id": "7cf317b8-f872-4acd-938e-8ca02dce073b",
+      "name": "deleteEmailChain",
+      "credentials": {
+        "microsoftSql": {
+          "id": "vcM0aaMy00q0wKN2",
+          "name": "Microsoft SQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const previous = $('ReformatSQLOutput').first().json.textBody\nconst latestEmail = $('Gmail Trigger').first().json.text\n\nconst updatedMessage = previous + `user:\\n ${latestEmail}\\n`;\n\nreturn [\n  {\n    json: {\n      textBody: updatedMessage\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2080,
+        -144
+      ],
+      "id": "2f03603d-d744-4d6b-b9d7-8f3b2f9d544b",
+      "name": "ReformatSQLOutput1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT TOP 1 threadId as threadId\nFROM PastEmails\nWHERE Email = '{{ $node[\"Gmail Trigger\"].json.headers.from.match(/<([^>]+)>/)?.[1] || $node[\"Gmail Trigger\"].json.headers.from }}'\nAND isDeleted = 0\nORDER BY Inserted_at DESC;"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        1664,
+        -144
+      ],
+      "id": "dd393f85-42f1-49fa-a7fb-53b4d8796d53",
+      "name": "GetPreviousThreadId",
+      "credentials": {
+        "microsoftSql": {
+          "id": "vcM0aaMy00q0wKN2",
+          "name": "Microsoft SQL account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Microsoft SQL": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PastEmailsExist?": {
+      "main": [
+        [
+          {
+            "node": "combine emails",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "addToPastEmails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute NoPastEmail": {
+      "main": [
+        []
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Execute NoPastEmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Microsoft SQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Execute PastEmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "addToPastEmails": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "combine emails": {
+      "main": [
+        [
+          {
+            "node": "ReformatSQLOutput",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "respecifying?",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ReformatSQLOutput": {
+      "main": [
+        [
+          {
+            "node": "exceedsReplyLimit?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "isRespecification?": {
+      "main": [
+        [
+          {
+            "node": "deleteEmailChain",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GetPreviousThreadId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "addToPastEmails1": {
+      "main": [
+        [
+          {
+            "node": "ReformatSQLOutput1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "exceedsReplyLimit?": {
+      "main": [
+        [
+          {
+            "node": "deleteMail1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "respecifying?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "deleteMail1": {
+      "main": [
+        [
+          {
+            "node": "exceededLimitMail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "IsEmailRelevant?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IsEmailRelevant?": {
+      "main": [
+        [
+          {
+            "node": "Microsoft SQL3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Microsoft SQL3": {
+      "main": [
+        [
+          {
+            "node": "EmailExists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "EmailExists?": {
+      "main": [
+        [
+          {
+            "node": "PastEmailsExist?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send email to register",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "respecifying?": {
+      "main": [
+        [
+          {
+            "node": "isRespecification?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "deleteEmailChain": {
+      "main": [
+        [
+          {
+            "node": "addToPastEmails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ReformatSQLOutput1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GetPreviousThreadId": {
+      "main": [
+        [
+          {
+            "node": "addToPastEmails1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {
+    "node:Gmail Trigger1": {
+      "Gmail Trigger1": {
+        "lastTimeChecked": 1763860205
+      }
+    },
+    "node:Gmail Trigger": {
+      "Gmail Trigger": {
+        "lastTimeChecked": 1775637917,
+        "possibleDuplicates": [
+          "19d6c449e2962f27",
+          "19d6c41f068571e2"
+        ]
+      }
+    }
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {
+    "Gmail Trigger": [
+      {
+        "json": {
+          "id": "19d3cccc67087979",
+          "threadId": "19d3cccc67087979",
+          "labelIds": [
+            "UNREAD",
+            "CATEGORY_PERSONAL",
+            "INBOX"
+          ],
+          "sizeEstimate": 8039,
+          "headers": {
+            "delivered-to": "Delivered-To: u7545871846@gmail.com",
+            "received": "Received: from mail-sor-f41.google.com (mail-sor-f41.google.com. [209.85.220.41])\r\n        by mx.google.com with SMTPS id ffacd0b85a97d-43cf2361ac6sor655774f8f.13.2026.03.29.20.32.26\r\n        for <u7545871846@gmail.com>\r\n        (Google Transport Security);\r\n        Sun, 29 Mar 2026 20:32:26 -0700 (PDT)",
+            "x-received": "X-Received: by 2002:a05:6000:428a:b0:439:c677:5145 with SMTP id\r\n ffacd0b85a97d-43b9ea46b1bmr17232033f8f.22.1774841545467; Sun, 29 Mar 2026\r\n 20:32:25 -0700 (PDT)",
+            "arc-seal": "ARC-Seal: i=1; a=rsa-sha256; t=1774841546; cv=none;\r\n        d=google.com; s=arc-20240605;\r\n        b=IuIwbaysoIHum6NpvzD+FZZpVbra0jcItD/VV40GbJHtsOEclTO7LrMe9nSWF/pRYp\r\n         gkccST1rWVLvPOwrN/THXSDZewJVEKuLdyH6R6N8uHf3/WXVFPBvYodni5c08G0fTHyE\r\n         SV+EQ/NjAB30wLx8HLx6UaF0Qirn12hWgxV1MhBRuh5oWkhe0MN/SRgWeWSaQ/3T9NZ1\r\n         1Jn/mcbnj37Ot22RSw0qyxuw97xi4RKx8kJqn2ayscxVHVmZ0klsrecmwDVYkHl2wNdg\r\n         y89zo17joUdrxmtgJgSCMjelg048Qg0164bHzy1QzSpQA0J0UQeFFTIbAxn1bU7P9ZW4\r\n         HhnA==",
+            "arc-message-signature": "ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;\r\n        h=to:subject:message-id:date:from:mime-version:dkim-signature;\r\n        bh=K3Hq7BZFnc8GpyWZZA4zD1jmMJidKUtOQo33ckqa1lE=;\r\n        fh=fV5JyDTqcMRQ+4M6yYoFzNyvOc2LpK0NYd7IGpd6HHU=;\r\n        b=dbjTKBp9fdvapyfXqhBKKsiGouKvt7QIcPa9KRL0ZqaNjSCm4hedlltC38HRlbWxo3\r\n         WfL0wixIK0rJu8Ro6NhpZnQtMCsf5MVVPb4gEbTYAXMgLNHYJyNEzS2EM7VtoSRPu2F5\r\n         RIzF2kGr+opL5FOGn8V75xcL/jeK27whC0AfVXkvak3FL8RpJqaT+AGl0eawcxLEitLM\r\n         EXfxMsgLA++MEv8OQTCbkrTjWymas1YisJlXLlotoRWhQXJWSQIjYfEOdUJAT/i6gAcb\r\n         N3zhGZ3en8sBzVF1Dmzkqr83nwMoQbiCFDgvzfWnm6XAlfJn/pWqcWoCGR8TC9AuZ9zk\r\n         rJtQ==;\r\n        dara=google.com",
+            "arc-authentication-results": "ARC-Authentication-Results: i=1; mx.google.com; arc=none",
+            "return-path": "Return-Path: <testuserwootera@gmail.com>",
+            "received-spf": "Received-SPF: pass (google.com: domain of testuserwootera@gmail.com designates 209.85.220.41 as permitted sender) client-ip=209.85.220.41;",
+            "authentication-results": "Authentication-Results: mx.google.com;\r\n       dkim=pass header.i=@gmail.com header.s=20251104 header.b=\"eesS/UbI\";\r\n       arc=pass (i=1);\r\n       spf=pass (google.com: domain of testuserwootera@gmail.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=testuserwootera@gmail.com;\r\n       dmarc=pass (p=NONE sp=QUARANTINE dis=NONE) header.from=gmail.com;\r\n       dara=pass header.i=@gmail.com",
+            "dkim-signature": "DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;\r\n        d=gmail.com; s=20251104; t=1774841545; x=1775446345; dara=google.com;\r\n        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject\r\n         :date:message-id:reply-to;\r\n        bh=K3Hq7BZFnc8GpyWZZA4zD1jmMJidKUtOQo33ckqa1lE=;\r\n        b=eesS/UbI5svdkXHXDvIrWrjez+XHRByBglHvi3CFHyH1vg7qxqNIrGGLMOeZzVnKTS\r\n         Pk3yOl/2lFRhkdRrBlQVDyRVmfwg9Z0CHxiySlC++hL6o96Jl6fAd7/vfy0p2zs2Jwc5\r\n         Ur1mlcCMa+Ab251fTh9aGzslZunrgPcBeIoQ5EsiJE3D2fcV0sM94M5uRJmKrKpZOS3Z\r\n         WxywMnJriJ9g+O1w5W3iU02MJaM0xPr98vXeYJcPNo9JqZRFbbPhCdDUrl/BcA5W1w9l\r\n         tGjvq0a8NpgUVS4yj48OG0/YGnXuHfssTZzTLia3jkHzUq3WkZjri1L28c3tKtZm0IU9\r\n         qBpQ==",
+            "x-google-dkim-signature": "X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;\r\n        d=1e100.net; s=20251104; t=1774841545; x=1775446345;\r\n        h=to:subject:message-id:date:from:mime-version:x-gm-gg\r\n         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;\r\n        bh=K3Hq7BZFnc8GpyWZZA4zD1jmMJidKUtOQo33ckqa1lE=;\r\n        b=eoNmJ+6E8FVkTS9W7TCU7Of343d3Y9O+asiexbDkd3uG2N1bxE5O2a4i9xYiJtg53c\r\n         BW0nMLlOG48aqEYO8YUN2TjyS0og0rv88Jlihn4U4ulG7jPTbo91FK0pOr+mH/+5qixm\r\n         PDn7023Lcm6cKXKGLdJmP8La0inD1v08SyvNMrKVNzEpoQWXxAO2TwP3oc1XHpg6wYFx\r\n         9Fm9EYZ0XRxJyL3420VXdZZ6oWLs7YyLOv6hiptfRux4ySq65FCsjhjDXXJX9JxFC12H\r\n         mcJhwRJZNSkTt01ugtlWydlW7Xu0R5PcINRyZKCsH69TMcfkFXASepfpwKiw5GMjl7xc\r\n         P0BA==",
+            "x-gm-message-state": "X-Gm-Message-State: AOJu0YzZGZBcdP7+GerDqAirgJyjV6Kx7pfN3yBtFFIXiEfgRoNDfTk7\r\n\tmknucx6BV//ru0nLMupeoPRHPDQgx/TuccmBVCIdnUupsvWRfSac5dBA8LtyCYzeXyLanG26WUH\r\n\tWAdtcIElv+faFoVINIZeO3sUWmeqI7ZvyIR5gWw==",
+            "x-gm-gg": "X-Gm-Gg: ATEYQzzC95hMBEgeuBnmknRbplrjxSbRgy1SFSRTyILPBsBGNnZxgAPRRO9V57svWSs\r\n\t64+mhX5co2a9WP/qsl8QAHrWeNwasOplrO6bGofXFjE70d26I7dd5s0/vkDskzY6/X3TPx+Th9u\r\n\tYhw0jx+eFPTfs9XRQYMAlAyohnTWDh7NjlsR6N8kNhNCgmo9eMHq6Bgdo5QYv3bnxT4mTY7YvKf\r\n\twJbGkBlnL3S3SciK/wfjtf8QF2f/vlVFEPmv4sJGE1gvehf09smVYBu23J2SbewYezhtJjeCcrv\r\n\tdOVi",
+            "mime-version": "MIME-Version: 1.0",
+            "from": "From: testuserwootera <testuserwootera@gmail.com>",
+            "date": "Date: Mon, 30 Mar 2026 04:32:14 +0100",
+            "x-gm-features": "X-Gm-Features: AQROBzBZbRprIHZxmm0GzdjxyHIQIPTIO1APIGVAxstsy_0MiVFBYEc_5D9tvYQ",
+            "message-id": "Message-ID: <CALGWxqJQrV5bWriNU=c6pWxn+RUx5kQY-XD6Gb-3iZSOFkC08w@mail.gmail.com>",
+            "subject": "Subject: linda kralova pokracovani",
+            "to": "To: u7545871846@gmail.com",
+            "content-type": "Content-Type: multipart/alternative; boundary=\"000000000000d9ac65064e357f95\""
+          },
+          "html": "<div dir=\"ltr\"><span id=\"gmail-docs-internal-guid-dedf2cfa-7fff-8377-3524-c2c9e7c658bb\"><span style=\"font-size:11pt;font-family:Arial,sans-serif;color:rgb(0,0,0);background-color:rgb(251,252,254);font-variant-numeric:normal;font-variant-east-asian:normal;font-variant-alternates:normal;vertical-align:baseline\">Dobry den,\\n\\n zrušte </span><span style=\"font-size:11pt;font-family:Arial,sans-serif;color:rgb(0,0,0);font-variant-numeric:normal;font-variant-east-asian:normal;font-variant-alternates:normal;vertical-align:baseline\">2026-03-21T00:00:00.000Z, 1970-01-01T15:20:00.000Z</span><span style=\"font-size:11pt;font-family:Arial,sans-serif;color:rgb(0,0,0);background-color:rgb(251,252,254);font-variant-numeric:normal;font-variant-east-asian:normal;font-variant-alternates:normal;vertical-align:baseline\"> \\n\\nDiky za informaci.\\n\\nLinda Králová\\n\\n</span></span></div>\n",
+          "text": "Dobry den,\\n\\n zrušte 2026-03-21T00:00:00.000Z, 1970-01-01T15:20:00.000Z\n\\n\\nDiky za informaci.\\n\\nLinda Králová\\n\\n\n",
+          "textAsHtml": "<p>Dobry den,\\n\\n zru&scaron;te 2026-03-21T00:00:00.000Z, 1970-01-01T15:20:00.000Z<br/>\\n\\nDiky za informaci.\\n\\nLinda Kr&aacute;lov&aacute;\\n\\n</p>",
+          "subject": "linda kralova pokracovani",
+          "date": "2026-03-30T03:32:14.000Z",
+          "to": {
+            "value": [
+              {
+                "address": "u7545871846@gmail.com",
+                "name": ""
+              }
+            ],
+            "html": "<span class=\"mp_address_group\"><a href=\"mailto:u7545871846@gmail.com\" class=\"mp_address_email\">u7545871846@gmail.com</a></span>",
+            "text": "u7545871846@gmail.com"
+          },
+          "from": {
+            "value": [
+              {
+                "address": "testuserwootera@gmail.com",
+                "name": "testuserwootera"
+              }
+            ],
+            "html": "<span class=\"mp_address_group\"><span class=\"mp_address_name\">testuserwootera</span> &lt;<a href=\"mailto:testuserwootera@gmail.com\" class=\"mp_address_email\">testuserwootera@gmail.com</a>&gt;</span>",
+            "text": "\"testuserwootera\" <testuserwootera@gmail.com>"
+          },
+          "messageId": "<CALGWxqJQrV5bWriNU=c6pWxn+RUx5kQY-XD6Gb-3iZSOFkC08w@mail.gmail.com>"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "versionId": "486a21b0-8f7a-483f-af99-951d5fa9cc2a",
+  "activeVersionId": "486a21b0-8f7a-483f-af99-951d5fa9cc2a",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-04-08T08:58:43.063Z",
+      "createdAt": "2026-04-08T08:58:43.063Z",
+      "role": "workflow:editor",
+      "workflowId": "qYNiGKFstQeHGaC1",
+      "projectId": "ExQXd5kYcBwCypqX"
+    },
+    {
+      "updatedAt": "2025-11-23T01:05:53.165Z",
+      "createdAt": "2025-11-23T01:05:53.165Z",
+      "role": "workflow:owner",
+      "workflowId": "qYNiGKFstQeHGaC1",
+      "projectId": "yPzJv3C5PmT8sEFT"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-03-30T03:53:08.963Z",
+    "createdAt": "2026-03-30T03:53:08.963Z",
+    "versionId": "486a21b0-8f7a-483f-af99-951d5fa9cc2a",
+    "workflowId": "qYNiGKFstQeHGaC1",
+    "nodes": [
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT MAX(Id) as Id\nFROM PastEmails\nWHERE Email = '{{ $json.headers.from.match(/<([^>]+)>/)?.[1]|| $json.headers.from }}' AND isDeleted = 0"
+        },
+        "type": "n8n-nodes-base.microsoftSql",
+        "typeVersion": 1.1,
+        "position": [
+          -1024,
+          0
+        ],
+        "id": "984f4d3e-8215-40ed-8f04-515e5cd01cb3",
+        "name": "Microsoft SQL",
+        "credentials": {
+          "microsoftSql": {
+            "id": "vcM0aaMy00q0wKN2",
+            "name": "Microsoft SQL account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "4fd826af-e223-4783-b3f5-b203c8637e67",
+                "leftValue": "={{ $('Microsoft SQL').first().json.Id }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "number",
+                  "operation": "exists",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          272,
+          -16
+        ],
+        "id": "3d055acc-b652-4d74-af9b-6976cad8c0ed",
+        "name": "PastEmailsExist?"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "cykK4UqJTRfNhx44",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/cykK4UqJTRfNhx44",
+            "cachedResultName": "NoPastEmail Flow"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          2144,
+          96
+        ],
+        "id": "d00fd66e-cca8-4d86-9a7c-0aeb6c1768eb",
+        "name": "Execute NoPastEmail"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "afef9bef-1158-4638-b3f0-1a3f5f8113ad",
+                "name": "contents",
+                "value": "={{ $('Gmail Trigger').item.json.text }}",
+                "type": "string"
+              },
+              {
+                "id": "a0f0ef94-1d8c-48db-91fa-99b50fb37959",
+                "name": "from",
+                "value": "={{ $node[\"Gmail Trigger\"].json.headers.from.match(/<([^>]+)>/)?.[1] || $node[\"Gmail Trigger\"].json.headers.from }}",
+                "type": "string"
+              },
+              {
+                "id": "6a8a5bd0-b731-4c33-a252-dd1b852c3467",
+                "name": "threadId",
+                "value": "={{$node[\"Gmail Trigger\"].json.threadId}}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1936,
+          96
+        ],
+        "id": "85a2fd2b-029f-4c5e-bc79-5ab48923d09e",
+        "name": "Edit Fields"
+      },
+      {
+        "parameters": {
+          "pollTimes": {
+            "item": [
+              {
+                "mode": "everyMinute"
+              }
+            ]
+          },
+          "simple": false,
+          "filters": {},
+          "options": {}
+        },
+        "type": "n8n-nodes-base.gmailTrigger",
+        "typeVersion": 1.3,
+        "position": [
+          -1232,
+          0
+        ],
+        "id": "bf3a6b99-8aa4-4c0e-980b-552365a76288",
+        "name": "Gmail Trigger",
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "ze0NbDQepzpjNa4d",
+            "name": "testadminwootera"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "a55fb2ec-f189-48be-bba8-3992e1f64d5e",
+                "name": "contents",
+                "value": "={{$node[\"ReformatSQLOutput1\"].json.textBody}}",
+                "type": "string"
+              },
+              {
+                "id": "3b1c3ac4-969d-4006-a2e8-d890c7c5fdcd",
+                "name": "=from",
+                "value": "={{ $node[\"Gmail Trigger\"].json.headers.from.match(/<([^>]+)>/)?.[1] || $node[\"Gmail Trigger\"].json.headers.from }}",
+                "type": "string"
+              },
+              {
+                "id": "d8000dce-17f1-4fd5-a6f7-dcef4eb8d458",
+                "name": "=threadId",
+                "value": "={{$node[\"GetPreviousThreadId\"].json.threadId}}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          2272,
+          -144
+        ],
+        "id": "29f13028-d658-4039-9d90-e53484746392",
+        "name": "Edit Fields1"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "rdlpvpFbJbwbQUzC",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/rdlpvpFbJbwbQUzC",
+            "cachedResultName": "PastEmail Flow"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          2512,
+          -144
+        ],
+        "id": "c2264edd-4af0-481e-9d9f-853a4b0e6d52",
+        "name": "Execute PastEmail"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO PastEmails (Email, Contents, threadId) \nVALUES \n  (\n    '{{ $node[\"Gmail Trigger\"].json.headers.from.match(/<([^>]+)>/)?.[1] || $node[\"Gmail Trigger\"].json.headers.from }}', \n    '{{$node[\"Gmail Trigger\"].json.text}}',\n    '{{$node[\"Gmail Trigger\"].json.threadId}}'\n    \n  );"
+        },
+        "type": "n8n-nodes-base.microsoftSql",
+        "typeVersion": 1.1,
+        "position": [
+          1664,
+          112
+        ],
+        "id": "7ab6ac7d-7d5d-4f4a-912b-a6ea86f2e8fc",
+        "name": "addToPastEmails",
+        "credentials": {
+          "microsoftSql": {
+            "id": "vcM0aaMy00q0wKN2",
+            "name": "Microsoft SQL account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const rows = $input.all(); // gets all rows from previous node\n\nlet message = \"\";\nlet counter = 0;\nfor (const row of rows) {\n  const contents = row.json.Contents;\n  if (counter%2 == 1){\n    message += `user:\\n ${contents}\\n`;\n  }\n  else{\n     message += `admin response:\\n ${contents}\\n`;\n  }\n \n  counter += 1;\n}\n\nreturn [\n  {\n    json: {\n      textBody: message,\n      replyCount: counter\n    }\n  }\n];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          672,
+          -144
+        ],
+        "id": "c8692c0f-4a04-4976-8506-cd01bd0ceb69",
+        "name": "ReformatSQLOutput"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT Contents FROM PastEmails WHERE Email = '{{ $node[\"Gmail Trigger\"].json.headers.from.match(/<([^>]+)>/)?.[1] || $node[\"Gmail Trigger\"].json.headers.from }}' AND isDeleted = 0\n"
+        },
+        "type": "n8n-nodes-base.microsoftSql",
+        "typeVersion": 1.1,
+        "position": [
+          496,
+          -144
+        ],
+        "id": "4c8aee0d-8467-434e-9c20-6026c87023a9",
+        "name": "combine emails",
+        "credentials": {
+          "microsoftSql": {
+            "id": "vcM0aaMy00q0wKN2",
+            "name": "Microsoft SQL account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "model": "openai/gpt-5",
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+        "typeVersion": 1,
+        "position": [
+          1232,
+          -128
+        ],
+        "id": "764eaa89-c334-4d5d-b5e5-11f37c950298",
+        "name": "OpenRouter Chat Model1",
+        "credentials": {
+          "openRouterApi": {
+            "id": "qlW2I6aqmKwXZCyn",
+            "name": "OpenRouter account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "c5231ad5-00f5-489d-89d9-bceeaac8446e",
+                "leftValue": "={{ $json.text }}",
+                "rightValue": "yes",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals",
+                  "name": "filter.operator.equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1344,
+          -144
+        ],
+        "id": "ece4fcce-ef5c-4eba-b56d-f8e656ee4ea3",
+        "name": "isRespecification?"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO PastEmails (Email, Contents, threadId)\nSELECT\n  '{{ $node[\"Gmail Trigger\"].json.headers.from.match(/<([^>]+)>/)?.[1] || $node[\"Gmail Trigger\"].json.headers.from }}',\n  '{{ $node[\"Gmail Trigger\"].json.text }}',\n  pe.threadId\nFROM (\n  SELECT TOP 1 threadId\n  FROM PastEmails\n  WHERE Email = '{{ $node[\"Gmail Trigger\"].json.headers.from.match(/<([^>]+)>/)?.[1] || $node[\"Gmail Trigger\"].json.headers.from }}'\n  AND isDeleted = 0\n  ORDER BY Inserted_at DESC\n) pe;"
+        },
+        "type": "n8n-nodes-base.microsoftSql",
+        "typeVersion": 1.1,
+        "position": [
+          1840,
+          -144
+        ],
+        "id": "ad920a2d-d911-43e5-a958-79da1cc83545",
+        "name": "addToPastEmails1",
+        "credentials": {
+          "microsoftSql": {
+            "id": "vcM0aaMy00q0wKN2",
+            "name": "Microsoft SQL account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "c5231ad5-00f5-489d-89d9-bceeaac8446e",
+                "leftValue": "={{ $json.replyCount }}",
+                "rightValue": 6,
+                "operator": {
+                  "type": "number",
+                  "operation": "gt"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          832,
+          -144
+        ],
+        "id": "373f946b-70ee-4fd8-8580-8e616ece1545",
+        "name": "exceedsReplyLimit?"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE PastEmails \nSET isDeleted = 1 \nWHERE Email = '{{ $node[\"Gmail Trigger\"].json.headers.from.match(/<([^>]+)>/)?.[1] || $node[\"Gmail Trigger\"].json.headers.from }}' AND isDeleted = 0\n"
+        },
+        "type": "n8n-nodes-base.microsoftSql",
+        "typeVersion": 1.1,
+        "position": [
+          976,
+          -272
+        ],
+        "id": "2cc8eae9-79ed-4746-88dd-41e7d7843e74",
+        "name": "deleteMail1",
+        "credentials": {
+          "microsoftSql": {
+            "id": "vcM0aaMy00q0wKN2",
+            "name": "Microsoft SQL account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "fromEmail": "u7545871846@gmail.com",
+          "toEmail": "={{ $node[\"Gmail Trigger\"].json.headers.from.match(/<([^>]+)>/)?.[1] || $node[\"Gmail Trigger\"].json.headers.from }}",
+          "emailFormat": "text",
+          "text": "Dobrý den,\n\nbohužel už Vám více pomoci nemůžem. Prosíme obrat'te se na číslo uvedené níže.\n\nfirma",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.emailSend",
+        "typeVersion": 2.1,
+        "position": [
+          1120,
+          -320
+        ],
+        "id": "604752ce-03f7-488b-bdc2-25ba6a7d76d0",
+        "name": "exceededLimitMail",
+        "webhookId": "294fae90-79dd-426f-a80a-d289016391cd",
+        "credentials": {
+          "smtp": {
+            "id": "HKK5kPvVIepunnFX",
+            "name": "testadminwootera SMTP"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "=Hello, determine whether following email written in Czech is related to a reservation date. If not, answer with 'no'. If yes, answer with 'yes'. Answer only once. Here is the email: {{ $('Gmail Trigger').item.json.text }}",
+          "messages": {
+            "messageValues": [
+              {
+                "type": "HumanMessagePromptTemplate",
+                "message": "="
+              }
+            ]
+          },
+          "batching": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.chainLlm",
+        "typeVersion": 1.7,
+        "position": [
+          -816,
+          0
+        ],
+        "id": "ef8c99c1-a973-4d3b-9d4a-e3e60b70dad6",
+        "name": "Basic LLM Chain",
+        "executeOnce": true
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "4fd826af-e223-4783-b3f5-b203c8637e67",
+                "leftValue": "={{ $json.text }}",
+                "rightValue": "yes",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals",
+                  "name": "filter.operator.equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          -432,
+          0
+        ],
+        "id": "626d6e86-b0e8-4d85-9f9a-d4bd84224fd2",
+        "name": "IsEmailRelevant?"
+      },
+      {
+        "parameters": {
+          "model": "openai/gpt-5",
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+        "typeVersion": 1,
+        "position": [
+          -576,
+          16
+        ],
+        "id": "00ad1f6a-baa3-45de-99b5-2d2884420326",
+        "name": "OpenRouter Chat Model",
+        "credentials": {
+          "openRouterApi": {
+            "id": "qlW2I6aqmKwXZCyn",
+            "name": "OpenRouter account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT Id FROM users WHERE Email = '{{ $node[\"Gmail Trigger\"].json.headers.from.match(/<([^>]+)>/)?.[1] || $node[\"Gmail Trigger\"].json.headers.from }}'\n"
+        },
+        "type": "n8n-nodes-base.microsoftSql",
+        "typeVersion": 1.1,
+        "position": [
+          -176,
+          -48
+        ],
+        "id": "41733039-a8a7-492a-9931-2ada501e8c3b",
+        "name": "Microsoft SQL3",
+        "credentials": {
+          "microsoftSql": {
+            "id": "vcM0aaMy00q0wKN2",
+            "name": "Microsoft SQL account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "4fd826af-e223-4783-b3f5-b203c8637e67",
+                "leftValue": "={{ $('Microsoft SQL3').first().json.Id }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "number",
+                  "operation": "exists",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          16,
+          -48
+        ],
+        "id": "7827fefe-f92a-41d1-8039-f14909ddd127",
+        "name": "EmailExists?"
+      },
+      {
+        "parameters": {
+          "fromEmail": "u7545871846@gmail.com",
+          "toEmail": "={{ $node[\"Gmail Trigger\"].json.headers.from.match(/<([^>]+)>/)?.[1] || $node[\"Gmail Trigger\"].json.headers.from }}",
+          "subject": "Email not registered",
+          "emailFormat": "text",
+          "text": "=Dobrý den, \nBohužel v našem systému nejste zapsáni. Prosím registrujte se níže.",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.emailSend",
+        "typeVersion": 2.1,
+        "position": [
+          240,
+          192
+        ],
+        "id": "594f756f-2bcb-49dd-a389-c38ce7aa1492",
+        "name": "Send email to register",
+        "webhookId": "5674e08c-d739-4dbd-8c9d-343c6909eefc",
+        "credentials": {
+          "smtp": {
+            "id": "HKK5kPvVIepunnFX",
+            "name": "testadminwootera SMTP"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "=Analyze the following email exchange in Czech/Slovak to determine whether in the most recent user email, the user is responding to the rezervations sent by the admin or if the user is respecifying information about the rezervation the user would like to cancel in the user emails before. If its the respecifying case then output 'yes'. If no, output 'no'. Here is the email correspondence: {{ $('ReformatSQLOutput').item.json.textBody }}\n\n\n",
+          "messages": {
+            "messageValues": [
+              {
+                "type": "HumanMessagePromptTemplate",
+                "message": "="
+              }
+            ]
+          },
+          "batching": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.chainLlm",
+        "typeVersion": 1.7,
+        "position": [
+          992,
+          -144
+        ],
+        "id": "c8975ff3-9a97-4903-bb7f-be195fd05ad5",
+        "name": "respecifying?",
+        "executeOnce": true
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE PastEmails \nSET isDeleted = 1 \nWHERE Email = '{{ $node[\"Gmail Trigger\"].json.headers.from.match(/<([^>]+)>/)?.[1] || $node[\"Gmail Trigger\"].json.headers.from }}' AND isDeleted = 0\n"
+        },
+        "type": "n8n-nodes-base.microsoftSql",
+        "typeVersion": 1.1,
+        "position": [
+          1504,
+          -32
+        ],
+        "id": "7cf317b8-f872-4acd-938e-8ca02dce073b",
+        "name": "deleteEmailChain",
+        "credentials": {
+          "microsoftSql": {
+            "id": "vcM0aaMy00q0wKN2",
+            "name": "Microsoft SQL account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const previous = $('ReformatSQLOutput').first().json.textBody\nconst latestEmail = $('Gmail Trigger').first().json.text\n\nconst updatedMessage = previous + `user:\\n ${latestEmail}\\n`;\n\nreturn [\n  {\n    json: {\n      textBody: updatedMessage\n    }\n  }\n];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2080,
+          -144
+        ],
+        "id": "2f03603d-d744-4d6b-b9d7-8f3b2f9d544b",
+        "name": "ReformatSQLOutput1"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT TOP 1 threadId as threadId\nFROM PastEmails\nWHERE Email = '{{ $node[\"Gmail Trigger\"].json.headers.from.match(/<([^>]+)>/)?.[1] || $node[\"Gmail Trigger\"].json.headers.from }}'\nAND isDeleted = 0\nORDER BY Inserted_at DESC;"
+        },
+        "type": "n8n-nodes-base.microsoftSql",
+        "typeVersion": 1.1,
+        "position": [
+          1664,
+          -144
+        ],
+        "id": "dd393f85-42f1-49fa-a7fb-53b4d8796d53",
+        "name": "GetPreviousThreadId",
+        "credentials": {
+          "microsoftSql": {
+            "id": "vcM0aaMy00q0wKN2",
+            "name": "Microsoft SQL account"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Microsoft SQL": {
+        "main": [
+          [
+            {
+              "node": "Basic LLM Chain",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "PastEmailsExist?": {
+        "main": [
+          [
+            {
+              "node": "combine emails",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "addToPastEmails",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Execute NoPastEmail": {
+        "main": [
+          []
+        ]
+      },
+      "Edit Fields": {
+        "main": [
+          [
+            {
+              "node": "Execute NoPastEmail",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gmail Trigger": {
+        "main": [
+          [
+            {
+              "node": "Microsoft SQL",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Edit Fields1": {
+        "main": [
+          [
+            {
+              "node": "Execute PastEmail",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "addToPastEmails": {
+        "main": [
+          [
+            {
+              "node": "Edit Fields",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "combine emails": {
+        "main": [
+          [
+            {
+              "node": "ReformatSQLOutput",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OpenRouter Chat Model1": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "respecifying?",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "ReformatSQLOutput": {
+        "main": [
+          [
+            {
+              "node": "exceedsReplyLimit?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "isRespecification?": {
+        "main": [
+          [
+            {
+              "node": "deleteEmailChain",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "GetPreviousThreadId",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "addToPastEmails1": {
+        "main": [
+          [
+            {
+              "node": "ReformatSQLOutput1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "exceedsReplyLimit?": {
+        "main": [
+          [
+            {
+              "node": "deleteMail1",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "respecifying?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "deleteMail1": {
+        "main": [
+          [
+            {
+              "node": "exceededLimitMail",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Basic LLM Chain": {
+        "main": [
+          [
+            {
+              "node": "IsEmailRelevant?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OpenRouter Chat Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Basic LLM Chain",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IsEmailRelevant?": {
+        "main": [
+          [
+            {
+              "node": "Microsoft SQL3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Microsoft SQL3": {
+        "main": [
+          [
+            {
+              "node": "EmailExists?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "EmailExists?": {
+        "main": [
+          [
+            {
+              "node": "PastEmailsExist?",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Send email to register",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "respecifying?": {
+        "main": [
+          [
+            {
+              "node": "isRespecification?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "deleteEmailChain": {
+        "main": [
+          [
+            {
+              "node": "addToPastEmails",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "ReformatSQLOutput1": {
+        "main": [
+          [
+            {
+              "node": "Edit Fields1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "GetPreviousThreadId": {
+        "main": [
+          [
+            {
+              "node": "addToPastEmails1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Frank Young",
+    "name": null,
+    "description": null
+  },
+  "tags": []
+}

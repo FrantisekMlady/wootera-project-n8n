@@ -1,0 +1,1504 @@
+{
+  "updatedAt": "2026-03-30T02:06:28.478Z",
+  "createdAt": "2025-11-23T00:48:33.006Z",
+  "id": "cykK4UqJTRfNhx44",
+  "name": "NoPastEmail Flow",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO PastEmails (Email, Contents, threadId) \nVALUES \n  (\n    '{{ $items('When Executed by Another Workflow')[0].json.from }}',\n    'Dobrý den, \nzatím u nás nemáte žádné rezervace na danný datum. Máte ale následující rezervace na stejný čas v těchto dnech. \n{{ $(\"ReformatSQLOutput\").item.json.textBody }}',\n  '{{ $items('When Executed by Another Workflow')[0].json.threadId }}'\n  );"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        -1328,
+        528
+      ],
+      "id": "95fe46fd-9442-4ef6-b6da-e2cbb9e8ec85",
+      "name": "Microsoft SQL",
+      "credentials": {
+        "microsoftSql": {
+          "id": "vcM0aaMy00q0wKN2",
+          "name": "Microsoft SQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO PastEmails (Email, Contents, threadId) \nVALUES \n  (\n    '{{ $items('When Executed by Another Workflow')[0].json.from }}',\n    'Dobrý den, \nzatím u nás nemáte žádné rezervace na danný čas. Máte ale následující rezervace na stejný den v těchto časových obdobích.  \n{{ $(\"ReformatSQLOutput2\").item.json.textBody }}',\n  '{{ $items('When Executed by Another Workflow')[0].json.threadId }}'\n  );"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        -1328,
+        784
+      ],
+      "id": "f59b6225-1497-4086-a2c6-f5baa691d3c7",
+      "name": "Microsoft SQL10",
+      "credentials": {
+        "microsoftSql": {
+          "id": "vcM0aaMy00q0wKN2",
+          "name": "Microsoft SQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO PastEmails (Email, Contents, threadId) \nVALUES \n  (\n    '{{ $items(\"When Executed by Another Workflow\")[0].json.from }}',\n    'Dobrý den, \nzatím u nás nemáte žádné rezervace na danný čas a datum. Máte ale u nás následující rezervace. \n{{ $(\"ReformatSQLOutput1\").item.json.textBody }}',\n  '{{ $items('When Executed by Another Workflow')[0].json.threadId }}'\n  );"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        -1136,
+        976
+      ],
+      "id": "2168d25c-c35b-4c6d-b976-b23ee80c66cc",
+      "name": "Microsoft SQL11",
+      "credentials": {
+        "microsoftSql": {
+          "id": "vcM0aaMy00q0wKN2",
+          "name": "Microsoft SQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE reservations\nSET Start_time = NULL,\n    End_time   = NULL\nWHERE Email = '{{ $('When Executed by Another Workflow').item.json.from }}' /*Dont use for testing because it will delete ALL start times sinve we only have 1 test email!!!*/"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        -1824,
+        240
+      ],
+      "id": "de6af039-7e82-4609-bfcc-26490c6f1da5",
+      "name": "Microsoft SQL2",
+      "credentials": {
+        "microsoftSql": {
+          "id": "vcM0aaMy00q0wKN2",
+          "name": "Microsoft SQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Current date and time: {{ $('date').item.json.date }}\nLeap year status: {{ $('date').item.json.leapyear }}\n\nHello, determine whether the following email written in Czech contains a start time (not a start date in days and months, but a time in hours) for the reservation mentioned. If yes, answer with 'yes'. Otherwise, answer with 'no'. Answer only once. Here is the email: {{ $('When Executed by Another Workflow').item.json.contents }}",
+        "messages": {
+          "messageValues": [
+            {
+              "type": "HumanMessagePromptTemplate",
+              "message": "="
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -3360,
+        736
+      ],
+      "id": "6c57a488-b61c-4012-bc13-d18043045fb3",
+      "name": "Basic LLM Chain1",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-5",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -3104,
+        752
+      ],
+      "id": "32b722c7-d5fb-4124-8a32-05fce60cc17a",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "qlW2I6aqmKwXZCyn",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Current date and time: {{ $('date').item.json.date }}\nLeap year status: {{ $('date').item.json.leapyear }}\n\nHello, determine whether the following email written in Czech contains a start date (not a start time in hours) for the reservation mentioned. Try to account for relative terms such as 'tomorrow' using the current date and leap year status. Only consider the date that they are trying to cancel. If yes, answer with 'yes'. Otherwise, answer with 'no'. Answer only once. Here is the email: {{ $('When Executed by Another Workflow').item.json.contents }}",
+        "messages": {
+          "messageValues": [
+            {
+              "type": "HumanMessagePromptTemplate",
+              "message": "="
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -3360,
+        1184
+      ],
+      "id": "3bfec093-f417-4c04-b499-ee73bb9b791c",
+      "name": "Basic LLM Chain2",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-5",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -3104,
+        1200
+      ],
+      "id": "a84b3dbd-4354-40e3-8f24-2fa9ac3cee5c",
+      "name": "OpenRouter Chat Model2",
+      "credentials": {
+        "openRouterApi": {
+          "id": "qlW2I6aqmKwXZCyn",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4fd826af-e223-4783-b3f5-b203c8637e67",
+              "leftValue": "={{ $json.text }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2960,
+        1184
+      ],
+      "id": "86dbb26b-4968-46d5-b540-c7d022217223",
+      "name": "StartDateExists?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4fd826af-e223-4783-b3f5-b203c8637e67",
+              "leftValue": "={{ $json.text }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2960,
+        736
+      ],
+      "id": "d9c93fdb-0011-4a88-981e-31226642cc3d",
+      "name": "StartTimeExists?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT TOP 1 Start_time \nFROM reservations \nWHERE Email = '{{ $('When Executed by Another Workflow').item.json.from }}' AND Start_time = '{{ $('Basic LLM Chain3').item.json.text }}'\nORDER BY Start_time ASC;"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        -2800,
+        592
+      ],
+      "id": "fe2bb11b-472d-4adf-ab22-0a452366c6eb",
+      "name": "Microsoft SQL5",
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "microsoftSql": {
+          "id": "vcM0aaMy00q0wKN2",
+          "name": "Microsoft SQL account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4fd826af-e223-4783-b3f5-b203c8637e67",
+              "leftValue": "={{ $('Basic LLM Chain3').item.json.text }}",
+              "rightValue": "={{ $json.Start_time }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2592,
+        592
+      ],
+      "id": "078b9af5-10a6-45b6-a40b-54affea2cd64",
+      "name": "StartTimeCorrect?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4fd826af-e223-4783-b3f5-b203c8637e67",
+              "leftValue": "={{ $json.Reservation_date }}",
+              "rightValue": "={{ $('Basic LLM Chain4').item.json.text }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2592,
+        1056
+      ],
+      "id": "532ef281-9fa8-4cd0-9757-7d436932f181",
+      "name": "StartDateCorrect?1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT TOP 1 Reservation_date \nFROM reservations \nWHERE Email =  '{{ $('When Executed by Another Workflow').item.json.from }}' AND Reservation_date = '{{ $('Basic LLM Chain4').item.json.text }}'\nORDER BY Reservation_date ASC;\n"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        -2784,
+        1056
+      ],
+      "id": "96f5845b-6c65-4bda-9b19-ce8e6491d0d6",
+      "name": "Microsoft SQL6",
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "microsoftSql": {
+          "id": "vcM0aaMy00q0wKN2",
+          "name": "Microsoft SQL account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "text",
+        "joinMode": "keepEverything",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -2272,
+        480
+      ],
+      "id": "447a28c4-16a4-4dec-b1a4-5e4f3f38bc0e",
+      "name": "AllCorect"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "text",
+        "joinMode": "keepNonMatches",
+        "outputDataFrom": "input1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -2176,
+        704
+      ],
+      "id": "4ede62f3-014d-4763-9008-8d6c018f6825",
+      "name": "TimeCorrectDateFalse"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "text",
+        "joinMode": "keepNonMatches",
+        "outputDataFrom": "input1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -2176,
+        992
+      ],
+      "id": "fc355529-2725-4311-ba1c-1186b259ef86",
+      "name": "DateCorrectTimeFalse"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "text",
+        "joinMode": "keepEverything",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -2176,
+        1264
+      ],
+      "id": "0ed6e891-f3ca-4d05-8edc-5a4d34e3f3d4",
+      "name": "AllFalse"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM reservations WHERE Email = '{{ $('When Executed by Another Workflow').item.json.from }}' AND Start_time = '{{ $('Basic LLM Chain3').first().json.text }}'"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        -1936,
+        704
+      ],
+      "id": "a387f69a-7deb-428a-ab73-9b06996dbddd",
+      "name": "Microsoft SQL1",
+      "credentials": {
+        "microsoftSql": {
+          "id": "vcM0aaMy00q0wKN2",
+          "name": "Microsoft SQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "=u7545871846@gmail.com",
+        "toEmail": "={{ $items(\"When Executed by Another Workflow\")[0].json.from }}",
+        "subject": "Corrrect date not provided",
+        "emailFormat": "text",
+        "text": "=Dobrý den, \nzatím u nás nemáte žádné rezervace na danný datum. Máte ale následující rezervace na stejný čas v těchto dnech.\n{{ $json.textBody }}\n\n\n\nHezký den,\n\nfirma",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        -1600,
+        704
+      ],
+      "id": "e0ff2588-6b64-42f8-8f36-570ac76f5460",
+      "name": "Send email StarDateFalse",
+      "webhookId": "5674e08c-d739-4dbd-8c9d-343c6909eefc",
+      "credentials": {
+        "smtp": {
+          "id": "HKK5kPvVIepunnFX",
+          "name": "testadminwootera SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT Reservation_date, Email, Start_time \nFROM reservations \nWHERE Email = '{{ $('When Executed by Another Workflow').item.json.from }}' AND Reservation_date = '{{ $('Basic LLM Chain4').first().json.text }}'"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        -1936,
+        992
+      ],
+      "id": "723749ba-dbf3-4ee3-aabe-25de384e23ce",
+      "name": "Microsoft SQL8",
+      "credentials": {
+        "microsoftSql": {
+          "id": "vcM0aaMy00q0wKN2",
+          "name": "Microsoft SQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "u7545871846@gmail.com",
+        "toEmail": "={{ $items(\"When Executed by Another Workflow\")[0].json.from }}",
+        "subject": "Correct time not provided",
+        "emailFormat": "text",
+        "text": "=Dobrý den, \nzatím u nás nemáte žádné rezervace na danný čas. Máte ale následující rezervace na stejný den v těchto časových obdobích. \n{{ $json.textBody }}\n\n\n\n\nHezký den,\n\nfirma",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        -1600,
+        992
+      ],
+      "id": "e3e3ec49-63a2-473f-bfd1-1e057240b9d6",
+      "name": "Send email StarTimeFalse",
+      "webhookId": "5674e08c-d739-4dbd-8c9d-343c6909eefc",
+      "credentials": {
+        "smtp": {
+          "id": "HKK5kPvVIepunnFX",
+          "name": "testadminwootera SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM reservations WHERE Email = '{{ $('When Executed by Another Workflow').item.json.from }}' AND (Start_time IS NOT NULL or Reservation_date IS NOT NULL)"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        -1968,
+        1264
+      ],
+      "id": "f51db3fc-eb8c-4ec2-b708-438d221ebad3",
+      "name": "Microsoft SQL9",
+      "credentials": {
+        "microsoftSql": {
+          "id": "vcM0aaMy00q0wKN2",
+          "name": "Microsoft SQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4fd826af-e223-4783-b3f5-b203c8637e67",
+              "leftValue": "={{ $json.Id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1760,
+        1264
+      ],
+      "id": "4afb77d9-a5fa-4a3d-b362-fe33cac1f5e1",
+      "name": "ReservationsFound?"
+    },
+    {
+      "parameters": {
+        "fromEmail": "u7545871846@gmail.com",
+        "toEmail": "={{ $items(\"When Executed by Another Workflow\")[0].json.from }}",
+        "subject": "Date and time incorrect",
+        "emailFormat": "text",
+        "text": "=Dobrý den, \nzatím u nás nemáte žádné rezervace na danný čas a datum. Máte ale u nás následující rezervace.\n{{ $json.textBody }}\n\nHezký den,\n\nfirma",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        -1344,
+        1152
+      ],
+      "id": "46975a90-82ed-4e12-af63-4d8a4c2d0c2e",
+      "name": "Send email AllFalse",
+      "webhookId": "5674e08c-d739-4dbd-8c9d-343c6909eefc",
+      "credentials": {
+        "smtp": {
+          "id": "HKK5kPvVIepunnFX",
+          "name": "testadminwootera SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "u7545871846@gmail.com",
+        "toEmail": "={{ $('When Executed by Another Workflow').item.json.from }}",
+        "subject": "No reservations",
+        "emailFormat": "text",
+        "text": "=Dobrý den, \nzatím u nás nemáte žádné rezervace. Jestli si pamatujete, že jste za rezervaci zaplatili, zkontaktujte prosím následující číslo +420 123 456 789.\n\nHezký den,\n\nfirma",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        -1344,
+        1312
+      ],
+      "id": "de7aba27-89c9-4a0d-b617-83055c82a7fa",
+      "name": "Send reservationless AllFalse",
+      "webhookId": "5674e08c-d739-4dbd-8c9d-343c6909eefc",
+      "credentials": {
+        "smtp": {
+          "id": "HKK5kPvVIepunnFX",
+          "name": "testadminwootera SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Current date and time: {{ $('date').item.json.date }}\nLeap year status: {{ $('date').item.json.leapyear }}\n\nHello, determine whether the following email written in Czech contains a start time in hours (not a start date) for the reservation mentioned. If yes, output the time in such a way that it matches this format - '1970-01-01TXX:XX:XX.000Z' where X refers to a digit in the time. Do not output the time in single or double quotations, leave it without them. Answer only once. Only consider the start time that the they are trying to cancel. Here is the email: {{ $('When Executed by Another Workflow').item.json.contents }}",
+        "messages": {
+          "messageValues": [
+            {
+              "type": "HumanMessagePromptTemplate",
+              "message": "="
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -3760,
+        736
+      ],
+      "id": "5786feb7-3b48-4c7d-b1c8-91645a5b619e",
+      "name": "Basic LLM Chain3",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-5",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -3504,
+        752
+      ],
+      "id": "a7a4d682-9a29-4a17-b19c-a11bbeb70aa1",
+      "name": "OpenRouter Chat Model3",
+      "credentials": {
+        "openRouterApi": {
+          "id": "qlW2I6aqmKwXZCyn",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Current date and time: {{ $('date').item.json.date }}\nLeap year status: {{ $('date').item.json.leapyear }}\n\nHello, determine whether the following email written in Czech contains a start date (not start time) for the reservation mentioned. If yes, output the date in the following format - 'XXXX-YY-SST00:00:00.000Z' where Xs refer to the year, Ys refer to the month and Ss refer to the day. Do not output the date in single or double quotations, leave it without them. Try to account for relative terms such as 'tomorrow' using the current date and leap year status. Do not produce dates earlier than the current date. Answer only once. Only consider the date that they are trying to cancel. Here is the email: {{ $('When Executed by Another Workflow').item.json.contents}}",
+        "messages": {
+          "messageValues": [
+            {
+              "type": "HumanMessagePromptTemplate",
+              "message": "="
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -3744,
+        1184
+      ],
+      "id": "03db2235-1da9-4d2a-ab2f-59289282bed8",
+      "name": "Basic LLM Chain4",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-5",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -3488,
+        1200
+      ],
+      "id": "12ce085c-5ae4-4881-bafb-6416a140fa77",
+      "name": "OpenRouter Chat Model4",
+      "credentials": {
+        "openRouterApi": {
+          "id": "qlW2I6aqmKwXZCyn",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT Id FROM reservations WHERE Email = '{{ $('When Executed by Another Workflow').item.json.from }}' AND Start_time = '{{ $('Basic LLM Chain3').first().json.text }}' AND Reservation_date = '{{ $('Basic LLM Chain4').first().json.text }}'"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        -2080,
+        480
+      ],
+      "id": "3030b68f-5cbd-4c55-becc-45e430c8ebb8",
+      "name": "Microsoft SQL7",
+      "executeOnce": true,
+      "credentials": {
+        "microsoftSql": {
+          "id": "vcM0aaMy00q0wKN2",
+          "name": "Microsoft SQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4fd826af-e223-4783-b3f5-b203c8637e67",
+              "leftValue": "={{ $json.Id }}",
+              "rightValue": "={{ $json.Start_time }}",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1904,
+        480
+      ],
+      "id": "8f893123-2ba2-483c-b6f5-034f3989f2ee",
+      "name": "ReservationExists?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all(); // gets all rows from previous node\n\nlet message = \"Zde jsou Vaše rezervace:\\n\\n\";\n\nfor (const row of rows) {\n  const email = row.json.Email;\n  const date = row.json.Reservation_date;\n  const time = row.json.Start_time;\n  if(!time){\n    message += `• ${email} - ${date}, čas neuveden\\n`;\n  }\n  else if(!date){\n    message += `• ${email} - ${time}, datum neuvedeno \\n`;\n  }\n  else{\n    message += `• ${email} - ${date}, ${time}\\n`;\n  }\n}\n\nreturn [{ json: { textBody: message } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1760,
+        704
+      ],
+      "id": "9848d9c1-16ab-4490-9682-1697c55b8ee2",
+      "name": "ReformatSQLOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const sqlTuples = $('Microsoft SQL9').all().map(item => item.json);\nlet message = \"Zde jsou Vaše rezervace:\\n\\n\";\n\nfor (const row of sqlTuples) {\n  const email = row.Email;\n  const date = row.Reservation_date;\n  const time = row.Start_time;\n  if(!time){\n    message += `• ${email} - ${date}, čas neuveden\\n`;\n  }\n  else if(!date){\n    message += `• ${email} - ${time}, datum neuvedeno \\n`;\n  }\n  else{\n    message += `• ${email} - ${date}, ${time}\\n`;\n  }\n}\n\nreturn [{ json: { textBody: message } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1536,
+        1200
+      ],
+      "id": "91c8fa6e-6ce3-4d95-8aef-7be9c14bf9ec",
+      "name": "ReformatSQLOutput1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all(); // gets all rows from previous node\n\nlet message = \"Zde jsou Vaše rezervace:\\n\\n\";\n\nfor (const row of rows) {\n  const email = row.json.Email;\n  const date = row.json.Reservation_date;\n  const time = row.json.Start_time;\n  if(!time){\n    message += `• ${email} - ${date}, čas neuveden\\n`;\n  }\n  else if(!date){\n    message += `• ${email} - ${time}, datum neuvedeno \\n`;\n  }\n  else{\n    message += `• ${email} - ${date}, ${time}\\n`;\n  }\n}\n\nreturn [{ json: { textBody: message } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1760,
+        992
+      ],
+      "id": "ebdcff57-c90e-4881-b9e8-d92160597689",
+      "name": "ReformatSQLOutput2"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -4288,
+        960
+      ],
+      "id": "5694843f-25a3-4f57-b96d-69bf8f9c046e",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "errorMessage": "Succesful termination"
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        -592,
+        208
+      ],
+      "id": "71deb6ae-5c7d-4a23-985d-2d2f296bb0b6",
+      "name": "Stop and Error"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE PastEmails \nSET isDeleted = 1 \nWHERE Email = '{{ $('When Executed by Another Workflow').item.json.from }}' AND isDeleted = 0\n"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        -720,
+        448
+      ],
+      "id": "489fceed-9039-4d43-8c0a-9d638e9ff8bc",
+      "name": "deleteMail",
+      "credentials": {
+        "microsoftSql": {
+          "id": "vcM0aaMy00q0wKN2",
+          "name": "Microsoft SQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function generateCode(length = 8) {\n  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';\n  let code = '';\n  for (let i = 0; i < length; i++) {\n    code += chars[Math.floor(Math.random() * chars.length)];\n  }\n  return code;\n}\n\nreturn [\n  {\n    json: {\n      code: generateCode()\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1488,
+        320
+      ],
+      "id": "46b43453-9cda-41f7-bf4b-5300f9120873",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "\nINSERT INTO DiscountCodes (codes, used)\nVALUES ('{{$json.code}}', 0);\n;\n  \n"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        -1280,
+        320
+      ],
+      "id": "0d009e1d-b47a-443e-bfb5-465911676bd6",
+      "name": "Microsoft SQL13",
+      "credentials": {
+        "microsoftSql": {
+          "id": "vcM0aaMy00q0wKN2",
+          "name": "Microsoft SQL account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "fromEmail": "u7545871846@gmail.com",
+        "toEmail": "={{ $('When Executed by Another Workflow').item.json.from }}",
+        "subject": "Discount code",
+        "emailFormat": "text",
+        "text": "=Dobrý den, \nZasíláme Vám kupon, pomocí kterého si můžete vybrat druhý termín zdarma. Váš kod je {{ $('Code').item.json.code }}.\n\nUžijte si příjemný zbytek dne,\n\nfirma",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        -1040,
+        304
+      ],
+      "id": "bda5a656-b7b9-4dc1-8541-6e1c7511f850",
+      "name": "Send Code",
+      "webhookId": "5674e08c-d739-4dbd-8c9d-343c6909eefc",
+      "credentials": {
+        "smtp": {
+          "id": "HKK5kPvVIepunnFX",
+          "name": "testadminwootera SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const currentDate = DateTime.now().setZone('UTC').toISO();\n\nconst dt = DateTime.fromISO(currentDate);\nconst yearType = dt.isInLeapYear;\n\n// Return as single item\nreturn [\n  {\n    json: {\n      date: currentDate,\n      leapyear: yearType\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4112,
+        960
+      ],
+      "id": "64280483-7560-47b9-90c7-762b3b1927ba",
+      "name": "date"
+    }
+  ],
+  "connections": {
+    "Microsoft SQL": {
+      "main": [
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Microsoft SQL10": {
+      "main": [
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Microsoft SQL11": {
+      "main": [
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Microsoft SQL2": {
+      "main": [
+        []
+      ]
+    },
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "StartTimeExists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain2": {
+      "main": [
+        [
+          {
+            "node": "StartDateExists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "StartDateExists?": {
+      "main": [
+        [
+          {
+            "node": "Microsoft SQL6",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "TimeCorrectDateFalse",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "AllFalse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "StartTimeExists?": {
+      "main": [
+        [
+          {
+            "node": "Microsoft SQL5",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "DateCorrectTimeFalse",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "AllFalse",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Microsoft SQL5": {
+      "main": [
+        [
+          {
+            "node": "StartTimeCorrect?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "DateCorrectTimeFalse",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "AllFalse",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "StartTimeCorrect?": {
+      "main": [
+        [
+          {
+            "node": "AllCorect",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "TimeCorrectDateFalse",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "DateCorrectTimeFalse",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "AllFalse",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "StartDateCorrect?1": {
+      "main": [
+        [
+          {
+            "node": "AllCorect",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "DateCorrectTimeFalse",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "TimeCorrectDateFalse",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "AllFalse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Microsoft SQL6": {
+      "main": [
+        [
+          {
+            "node": "StartDateCorrect?1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AllFalse",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "TimeCorrectDateFalse",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "AllCorect": {
+      "main": [
+        [
+          {
+            "node": "Microsoft SQL7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TimeCorrectDateFalse": {
+      "main": [
+        [
+          {
+            "node": "Microsoft SQL1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DateCorrectTimeFalse": {
+      "main": [
+        [
+          {
+            "node": "Microsoft SQL8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AllFalse": {
+      "main": [
+        [
+          {
+            "node": "Microsoft SQL9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Microsoft SQL1": {
+      "main": [
+        [
+          {
+            "node": "ReformatSQLOutput",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send email StarDateFalse": {
+      "main": [
+        [
+          {
+            "node": "Microsoft SQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Microsoft SQL8": {
+      "main": [
+        [
+          {
+            "node": "ReformatSQLOutput2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send email StarTimeFalse": {
+      "main": [
+        [
+          {
+            "node": "Microsoft SQL10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Microsoft SQL9": {
+      "main": [
+        [
+          {
+            "node": "ReservationsFound?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ReservationsFound?": {
+      "main": [
+        [
+          {
+            "node": "ReformatSQLOutput1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send reservationless AllFalse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send email AllFalse": {
+      "main": [
+        [
+          {
+            "node": "Microsoft SQL11",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send reservationless AllFalse": {
+      "main": [
+        [
+          {
+            "node": "deleteMail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain3": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain3",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain4": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain4",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Microsoft SQL7": {
+      "main": [
+        [
+          {
+            "node": "ReservationExists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ReservationExists?": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ReformatSQLOutput": {
+      "main": [
+        [
+          {
+            "node": "Send email StarDateFalse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ReformatSQLOutput1": {
+      "main": [
+        [
+          {
+            "node": "Send email AllFalse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ReformatSQLOutput2": {
+      "main": [
+        [
+          {
+            "node": "Send email StarTimeFalse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "date",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "deleteMail": {
+      "main": [
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Microsoft SQL13",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Microsoft SQL13": {
+      "main": [
+        [
+          {
+            "node": "Send Code",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Code": {
+      "main": [
+        [
+          {
+            "node": "deleteMail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "date": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Basic LLM Chain4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "contents": "Dobrý den, \\n\\nmám u Vás v posilovně rezervaci na 9. 7. 2025 od 15:20\nhodin. Bohužel se v daném termínu nemůžu dostavit, chtěl bych tedy požádat\no jeho změnu.\\n\\nMoc děkuji\\n\\nS pozdravem\\nLukáš Černý\n",
+          "from": "testuserwootera@gmail.com",
+          "threadId": "19cecf25534f8943"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "versionId": "be3054e5-c529-4b23-a8c4-0f00d4f29252",
+  "activeVersionId": null,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-04-08T08:58:33.731Z",
+      "createdAt": "2026-04-08T08:58:33.731Z",
+      "role": "workflow:editor",
+      "workflowId": "cykK4UqJTRfNhx44",
+      "projectId": "ExQXd5kYcBwCypqX"
+    },
+    {
+      "updatedAt": "2025-11-23T00:48:33.010Z",
+      "createdAt": "2025-11-23T00:48:33.010Z",
+      "role": "workflow:owner",
+      "workflowId": "cykK4UqJTRfNhx44",
+      "projectId": "yPzJv3C5PmT8sEFT"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}

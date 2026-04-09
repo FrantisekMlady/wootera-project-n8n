@@ -1,0 +1,662 @@
+{
+  "updatedAt": "2026-04-08T08:58:52.795Z",
+  "createdAt": "2025-11-23T16:23:53.171Z",
+  "id": "rdlpvpFbJbwbQUzC",
+  "name": "PastEmail Flow",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=The current date is: {{ $json.date }}\nLeap year status: {{ $json.leapyear }}\n\nAnalyze the following email exchange in Czech/Slovak to determine which rezervation or rezervations the user would like to cancel. If there is a single rezervation they would like to cancel in the most recent user email, output the time in such a way that it matches this format - 'time: 1970-01-01TXX:XX:XX.000Z, date: YYYY-MM-DD' where X refers to a digit in the time. If there are many rezervations they want to cancel in the most recent user email, use the format specified but separate each rezervation with a comma. If the user responds by referencing a rezervation with incomplete information, try to figure out which rezervation they meant and output that. If you are sure that in the most recent user mail the user has specified a rezervation that wasn't mentioned in the admin response or if the time the user mentioned is off by more than 20 minutes or if the date the user mentions is off by a day or more, output 'couldn't identify rezervation'. Remember when a user uses '.' after a number, its usually refering to a date, not a time. Pay attention to plural and singular in the user responses about rezervations. If singular, assume they only want to cancel one reservation. Here is the email correspondence: {{ $('When Executed by Another Workflow').item.json.contents }}\n\n\n",
+        "messages": {
+          "messageValues": [
+            {
+              "type": "HumanMessagePromptTemplate",
+              "message": "="
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -224,
+        -16
+      ],
+      "id": "0d1b4c5a-beaf-4621-b4f6-fc23983442f2",
+      "name": "reservation extraction",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c5231ad5-00f5-489d-89d9-bceeaac8446e",
+              "leftValue": "={{ $json.text }}",
+              "rightValue": "couldn't identify rezervation",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        176,
+        -16
+      ],
+      "id": "ca22a801-bd8d-4fd4-a8e0-241bc7a43c20",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-5",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        32,
+        0
+      ],
+      "id": "54b33fd7-26c0-4ba7-aba3-e1f03be63498",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "qlW2I6aqmKwXZCyn",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -608,
+        -16
+      ],
+      "id": "0ce8f214-c270-42e2-8811-cc49079ed4b5",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $input.first().json.text;\nconst regex = /time:\\s*([^,]+),\\s*date:\\s*([^,]+)/g;\n\nlet match;\nconst reservations = [];\n\nwhile ((match = regex.exec(text)) !== null) {\n  const timeISO = match[1];\n  const date = match[2];\n\n  const time = new Date(timeISO).toISOString().substring(11, 19); // HH:MM:SS\n\n  reservations.push({\n    date,\n    time\n  });\n}\n\nreturn reservations.map(r => ({\n  json: {\n    date: r.date,\n    time: r.time,\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        80
+      ],
+      "id": "8838ef70-ac30-42db-b45c-8d06d0d69a3d",
+      "name": "ReformatGPToutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const currentDate = DateTime.now().setZone('UTC').toISO();\n\nconst dt = DateTime.fromISO(currentDate);\nconst yearType = dt.isInLeapYear;\n\n// Return as single item\nreturn [\n  {\n    json: {\n      date: currentDate,\n      leapyear: yearType\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        -16
+      ],
+      "id": "ba1c7ac4-97ec-4e6d-a956-8bd98fc0454d",
+      "name": "date"
+    },
+    {
+      "parameters": {
+        "jsCode": "const sqlTuples = $('Microsoft SQL9').all().map(item => item.json);\nlet message = \"Zde jsou Vaše rezervace:\\n\\n\";\n\nfor (const row of sqlTuples) {\n  const email = row.Email;\n  const date = row.Reservation_date;\n  const time = row.Start_time;\n  if(!time){\n    message += `• ${email} - ${date}, čas neuveden\\n`;\n  }\n  else if(!date){\n    message += `• ${email} - ${time}, datum neuvedeno \\n`;\n  }\n  else{\n    message += `• ${email} - ${date}, ${time}\\n`;\n  }\n}\n\nreturn [{ json: { textBody: message } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        -304
+      ],
+      "id": "9108b1f8-2d4d-4f7c-af07-edf581b41139",
+      "name": "ReformatSQLOutput1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT TOP 1 Id as Id\nFROM reservations\nWHERE Email = '{{ $items(\"When Executed by Another Workflow\")[0].json.from }}'\n  AND Start_time = '{{$json.time}}'\n  AND Reservation_date = '{{$json.date}}';"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        752,
+        80
+      ],
+      "id": "ccf5ea25-5022-4f18-93d4-2010d9112cdd",
+      "name": "Microsoft SQL7",
+      "executeOnce": false,
+      "credentials": {
+        "microsoftSql": {
+          "id": "vcM0aaMy00q0wKN2",
+          "name": "Microsoft SQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4fd826af-e223-4783-b3f5-b203c8637e67",
+              "leftValue": "={{ $json.Id }}",
+              "rightValue": "={{ $json.Start_time }}",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        928,
+        80
+      ],
+      "id": "d8ce3dc8-1487-474f-a616-3abb860a8d1e",
+      "name": "ReservationExists?"
+    },
+    {
+      "parameters": {
+        "errorMessage": "Succesful termination"
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        2032,
+        -16
+      ],
+      "id": "75009392-b534-4bd1-897a-0634cf4b525e",
+      "name": "Stop and Error"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "function generateCode(length = 8) {\n  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';\n  let code = '';\n  for (let i = 0; i < length; i++) {\n    code += chars[Math.floor(Math.random() * chars.length)];\n  }\n  return code;\n}\n\nreturn {\n  json: {\n    code: generateCode()\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1184,
+        64
+      ],
+      "id": "5cd7cb5a-c3b3-461b-92b9-c027ac3d366a",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "\nINSERT INTO DiscountCodes (codes, used)\nVALUES ('{{$json.code}}', 0);\n;\n  \n"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        1392,
+        64
+      ],
+      "id": "cc436224-bee9-4687-9af4-b52c780ad246",
+      "name": "Microsoft SQL13",
+      "credentials": {
+        "microsoftSql": {
+          "id": "vcM0aaMy00q0wKN2",
+          "name": "Microsoft SQL account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "fromEmail": "u7545871846@gmail.com",
+        "toEmail": "={{ $items('When Executed by Another Workflow')[0].json.from }}",
+        "subject": "Discount code",
+        "emailFormat": "text",
+        "text": "=Dobrý den, \nZasíláme Vám kupon, pomocí kterého si můžete vybrat druhý termín zdarma. Váš kod je {{ $('Code').item.json.code }}.\n\nUžijte si příjemný zbytek dne,\n\nfirma",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1632,
+        48
+      ],
+      "id": "4fab7d71-4b00-4b2a-8ada-bcbcfb75bc0f",
+      "name": "Send Code",
+      "webhookId": "5674e08c-d739-4dbd-8c9d-343c6909eefc",
+      "credentials": {
+        "smtp": {
+          "id": "HKK5kPvVIepunnFX",
+          "name": "testadminwootera SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM reservations WHERE Email = '{{ $items('When Executed by Another Workflow')[0].json.from }}' AND (Start_time IS NOT NULL or Reservation_date IS NOT NULL)"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        320,
+        -160
+      ],
+      "id": "da779390-c7c2-4bef-8bf7-a2522b1d4c77",
+      "name": "Microsoft SQL9",
+      "credentials": {
+        "microsoftSql": {
+          "id": "vcM0aaMy00q0wKN2",
+          "name": "Microsoft SQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4fd826af-e223-4783-b3f5-b203c8637e67",
+              "leftValue": "={{ $json.Id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        528,
+        -160
+      ],
+      "id": "751d7d1f-48e8-4ea0-9212-e977913dcb5b",
+      "name": "ReservationsFound?"
+    },
+    {
+      "parameters": {
+        "fromEmail": "u7545871846@gmail.com",
+        "toEmail": "={{ $items('When Executed by Another Workflow')[0].json.from }}",
+        "subject": "No reservations",
+        "emailFormat": "text",
+        "text": "=Dobrý den, \nzatím u nás nemáte žádné rezervace. Jestli si pamatujete, že jste za rezervaci zaplatili, zkontaktujte prosím následující číslo +420 123 456 789.\n\nHezký den,\n\nfirma",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        816,
+        -96
+      ],
+      "id": "d3f5a8fe-b088-4ee3-a765-182a4eb1165c",
+      "name": "Send reservationless AllFalse",
+      "webhookId": "5674e08c-d739-4dbd-8c9d-343c6909eefc",
+      "credentials": {
+        "smtp": {
+          "id": "HKK5kPvVIepunnFX",
+          "name": "testadminwootera SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO PastEmails (Email, Contents, threadId) \nVALUES \n  (\n    '{{ $items('When Executed by Another Workflow')[0].json.from }}',\n    'Dobrý den, zatím u nás nemáte žádné rezervace na danný čas a datum. Máte ale u nás následující rezervace.\n{{ $items('ReformatSQLOutput1')[0].json.textBody }}\n  Hezký den,\n  \n  firma',\n  '{{ $items('When Executed by Another Workflow')[0].json.threadId }}'\n  );"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        1168,
+        -304
+      ],
+      "id": "6542aa9e-9d36-4cda-899a-78038c0989e7",
+      "name": "Microsoft SQL3",
+      "credentials": {
+        "microsoftSql": {
+          "id": "vcM0aaMy00q0wKN2",
+          "name": "Microsoft SQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE PastEmails \nSET isDeleted = 1 \nWHERE Email = '{{ $items('When Executed by Another Workflow')[0].json.from }}' AND isDeleted = 0 AND threadId = '{{ $items('When Executed by Another Workflow')[0].json.threadId }}'\n"
+      },
+      "type": "n8n-nodes-base.microsoftSql",
+      "typeVersion": 1.1,
+      "position": [
+        1840,
+        -16
+      ],
+      "id": "824b4138-e922-40ca-ac9f-b8a375421c32",
+      "name": "deleteEmailChain",
+      "credentials": {
+        "microsoftSql": {
+          "id": "vcM0aaMy00q0wKN2",
+          "name": "Microsoft SQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "=u7545871846@gmail.com",
+        "toEmail": "={{ $items('When Executed by Another Workflow')[0].json.from }}",
+        "subject": "Email not registered",
+        "emailFormat": "text",
+        "text": "=Dobrý den, \nzatím u nás nemáte žádné rezervace na danný čas a datum. Máte ale u nás následující rezervace.\n{{ $json.textBody }}\n\nHezký den,\n\nfirma",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        960,
+        -304
+      ],
+      "id": "5851305b-3ef3-42ae-a7c8-51472b13e2a7",
+      "name": "sendAllReservations",
+      "webhookId": "5674e08c-d739-4dbd-8c9d-343c6909eefc",
+      "credentials": {
+        "smtp": {
+          "id": "HKK5kPvVIepunnFX",
+          "name": "testadminwootera SMTP"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "reservation extraction": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Microsoft SQL9",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ReformatGPToutput",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "reservation extraction",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "date",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ReformatGPToutput": {
+      "main": [
+        [
+          {
+            "node": "Microsoft SQL7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "date": {
+      "main": [
+        [
+          {
+            "node": "reservation extraction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Microsoft SQL7": {
+      "main": [
+        [
+          {
+            "node": "ReservationExists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Microsoft SQL13",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Microsoft SQL13": {
+      "main": [
+        [
+          {
+            "node": "Send Code",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Code": {
+      "main": [
+        [
+          {
+            "node": "deleteEmailChain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ReservationExists?": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Microsoft SQL9": {
+      "main": [
+        [
+          {
+            "node": "ReservationsFound?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ReservationsFound?": {
+      "main": [
+        [
+          {
+            "node": "ReformatSQLOutput1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send reservationless AllFalse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ReformatSQLOutput1": {
+      "main": [
+        [
+          {
+            "node": "sendAllReservations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send reservationless AllFalse": {
+      "main": [
+        [
+          {
+            "node": "deleteEmailChain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "deleteEmailChain": {
+      "main": [
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "sendAllReservations": {
+      "main": [
+        [
+          {
+            "node": "Microsoft SQL3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "contents": "admin response:\n Dobry den,\\n\\nchteli bychom si zmnenit termin cviceni, mame zamluveny cas v\nTruhlárské ulici na 15:20-16:40 a potrebovali bychom to prehodit na\ndrívejší cas.\\nJe nejaká možnost?\\n\\nDiky za informaci.\\n\\nLinda Králová\n\nuser:\n Dobrý den, \nzatím u nás nemáte žádné rezervace na danný datum. Máte ale následující rezervace na stejný cas v techto dnech. \nZde jsou Vaše rezervace:\n\n• testuserwootera@gmail.com - 2026-03-21T00:00:00.000Z, 1970-01-01T15:20:00.000Z\n• testuserwootera@gmail.com - 2026-07-09T00:00:00.000Z, 1970-01-01T15:20:00.000Z\n\nuser:\n Dobry den,\\n\\n zrušte 2026-03-21T00:00:00.000Z,\n1970-01-01T15:20:00.000Z a 2026-07-09T00:00:00.000Z,\n1970-01-01T15:20:00.000Z \\n\\nDiky za informaci.\\n\\nLinda Králová\\n\\n\n\n",
+          "from": "testuserwootera@gmail.com",
+          "threadId": "19d6c408ea111311"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "versionId": "9c5135a3-cb3c-459d-ab07-88eba99da65e",
+  "activeVersionId": null,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-04-08T08:58:49.495Z",
+      "createdAt": "2026-04-08T08:58:49.495Z",
+      "role": "workflow:editor",
+      "workflowId": "rdlpvpFbJbwbQUzC",
+      "projectId": "ExQXd5kYcBwCypqX"
+    },
+    {
+      "updatedAt": "2025-11-23T16:23:53.174Z",
+      "createdAt": "2025-11-23T16:23:53.174Z",
+      "role": "workflow:owner",
+      "workflowId": "rdlpvpFbJbwbQUzC",
+      "projectId": "yPzJv3C5PmT8sEFT"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
